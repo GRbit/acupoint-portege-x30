@@ -26,12 +26,13 @@ var (
 func main() {
 	flag.BoolVar(&debug, "d", false, "print debug")
 	path := flag.String("p", "/dev/hidraw0", "path to device file")
-	flag.DurationVar(&pause, "t", time.Millisecond * 100, "Milliseconds to wait for middle button emulation." +
-		" If two buttons pressed simultaneously before timeout, middle button will be pressed." +
+	flag.DurationVar(&pause, "t", time.Millisecond*100, "Milliseconds to wait for middle button emulation."+
+		" If two buttons pressed simultaneously before timeout, middle button will be pressed."+
 		" If one button is pressed more than timeout, usual button will be pressed")
 	flag.Parse()
 
-	deb(`"BB" - before click processing; "AA" - after click processing; 1 is left button; 2 is right button; 3 is middle button.
+	deb(`"BC" - before click processing; "AC" - after click processing; "MM" - mouse movement;
+1 is left button; 2 is right button; 3 is middle button.
 raw: {h='horizont rel' v='vertical rel' k='key_pressed'};
 prog: {pk='previous key pressed; kp='key programm is holding down' s='was scrolling'};
 pressed: { 1_button 2_button 3_button }
@@ -56,7 +57,8 @@ pressed: { 1_button 2_button 3_button }
 		// read content to buffer
 		readTotal, err := f.Read(b)
 		if err != nil {
-			log.Fatalln("Reading error", err)
+			log.Println("Reading error", err)
+			return
 		}
 
 		if readTotal != 4 || b[0] != 24 {
@@ -70,38 +72,41 @@ pressed: { 1_button 2_button 3_button }
 		}
 
 		h, v := int(int8(b[2])), int(int8(b[3]))
-		go m(h, v)
+		move(h, v)
+		deb("MM raw: {h=%d v=%d k=%d}; prog: {pk=%d; kp=%d; scr: %t;}; pressed: { %t %t %t }", h, v, k, pk, keyPressed, scrolled, *keys[1], *keys[2], *keys[3])
 
-		deb("BB raw: {h=%d v=%d k=%d}; prog: {pk=%d; kp=%d; scr: %t;}; pressed: { %t %t %t }", h, v, k, pk, keyPressed, scrolled, *keys[1], *keys[2], *keys[3])
 		// if mouse click do not change
 		if k != pk {
+			deb("BC raw: {h=%d v=%d k=%d}; prog: {pk=%d; kp=%d; scr: %t;}; pressed: { %t %t %t }", h, v, k, pk, keyPressed, scrolled, *keys[1], *keys[2], *keys[3])
+
 			switch k {
 			case 0:
-				u()
+				up()
 			case 1, 2:
-				if keyPressed != 3 {
+				if keyPressed == 0 {
 					keyPressed = k
 
 					go func() {
 						time.Sleep(pause)
-						if !mid {
-							d(k)
+						if keyPressed == k {
+							down(k)
 						}
 					}()
 				}
 			case 3:
 				keyPressed = k
-				d(k)
+				down(k)
 			}
+
+			deb("AC raw: {h=%d v=%d k=%d}; prog: {pk=%d; kp=%d; scr: %t;}; pressed: { %t %t %t }", h, v, k, pk, keyPressed, scrolled, *keys[1], *keys[2], *keys[3])
 		}
 
-		deb("AA raw: {h=%d v=%d k=%d}; prog: {pk=%d; kp=%d; scr: %t;}; pressed: { %t %t %t }", h, v, k, pk, keyPressed, scrolled, *keys[1], *keys[2], *keys[3])
 		pk = k
 	}
 
 }
 
-func u() {
+func up() {
 	b := keyPressed
 	defer func() {
 		*keys[b] = false
@@ -129,7 +134,7 @@ func u() {
 	keyPressed = 0
 }
 
-func d(b uint8) {
+func down(b uint8) {
 	if *keys[b] == true || keyPressed == 0 {
 		return
 	}
@@ -142,7 +147,7 @@ func d(b uint8) {
 	}
 }
 
-func m(h, v int) {
+func move(h, v int) {
 	if h == 0 && v == 0 {
 		return
 	}
@@ -150,7 +155,7 @@ func m(h, v int) {
 	if keyPressed != 3 {
 		robotgo.MoveRelative(e(h), e(v))
 	} else {
-		robotgo.Scroll(scr(h), scr(v), 0)
+		robotgo.Scroll(scr(h), scr(v), 5)
 		scrolled = true
 	}
 }
@@ -162,7 +167,7 @@ func scr(x int) int {
 
 	f := float64(x)
 
-	return int( -f / math.Abs(f) * math.Sqrt(math.Abs(f)))
+	return int(-f / math.Abs(f) * math.Sqrt(math.Abs(f)))
 }
 
 func e(x int) int {
@@ -175,7 +180,7 @@ func deb(format string, a ...interface{}) {
 		return
 	}
 
-	fmt.Printf(format + "\n", a...)
+	fmt.Printf(format+"\n", a...)
 }
 
 func bt(x uint8) string {
