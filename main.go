@@ -148,26 +148,43 @@ func down(b uint8) {
 }
 
 func move(h, v int) {
+	if keyPressed == 3 {
+		scrolled = true
+
+		h, v = scr(h, &H), scr(v, &V)
+		if h == 0 && v == 0 {
+			return
+		}
+
+		robotgo.Scroll(h, v, 0)
+	}
+
+	h, v = e(h), e(v)
 	if h == 0 && v == 0 {
 		return
 	}
 
-	if keyPressed != 3 {
-		robotgo.MoveRelative(e(h), e(v))
-	} else {
-		robotgo.Scroll(scr(h), scr(v), 5)
-		scrolled = true
-	}
+	robotgo.MoveRelative(h, v)
 }
 
-func scr(x int) int {
+var H, V float64
+
+func scr(x int, base *float64) int {
 	if x == 0 {
 		return 0
 	}
 
 	f := float64(x)
+	sign := int(-f/math.Abs(f)) * int(math.Sqrt(math.Abs(f)))
 
-	return int(-f / math.Abs(f) * math.Sqrt(math.Abs(f)))
+	*base -= math.Abs(f) * math.Abs(f)
+
+	if *base < 0 {
+		*base = 77
+		return sign
+	}
+
+	return 0
 }
 
 func e(x int) int {
