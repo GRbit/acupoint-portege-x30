@@ -149,14 +149,15 @@ func down(b uint8) {
 
 func move(h, v int) {
 	if keyPressed == 3 {
-		scrolled = true
-
 		h, v = scr(h, &H), scr(v, &V)
 		if h == 0 && v == 0 {
 			return
 		}
 
-		robotgo.Scroll(h, v, 0)
+		robotgo.Scroll(h, v, 5)
+		scrolled = true
+
+		return
 	}
 
 	h, v = e(h), e(v)
