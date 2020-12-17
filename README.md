@@ -11,6 +11,8 @@ So basicly it makes trackpoint work.
 
 Programm supports middle button click (when two buttons pressed at once) and scrolling on middle button hold.
 
+### Requirements:
+See [robotgo](https://github.com/go-vgo/robotgo) requirements.
 
 ### Device file
 You need to find where is device file, on my machine it's /dev/hidraw0. 
