@@ -14,6 +14,16 @@ Programm supports middle button click (when two buttons pressed at once) and scr
 ### Requirements:
 See [robotgo](https://github.com/go-vgo/robotgo) requirements.
 
+To compile with golang and robotgo installed, headers from following packages are also needed (Ubuntu 20.04 LTS):
+-libx11-dev
+-libxtst-dev
+-libx11-xcb-dev
+-libxkbcommon-dev
+-libxkbcommon-x11-dev
+-libpng-dev
+
+A missing header file package can be found via apt-file search ... if needed.
+
 ### Device file
 You need to find where is device file, on my machine it's /dev/hidraw0. 
 If on your machine it's located somewhere else, just pass it to promgramm as an argument:
