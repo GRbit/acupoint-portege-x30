@@ -1,3 +1,7 @@
+## Update
+
+Thanks to Manuel Fombuena current Linux kernel can succesfully found and enable the driver that works with trackpoint, so this program should not be needed anymore.
+
 ## acupoint-portege-x30
 Userspace driver for toshiba portege x30-f accupoint device 06cd cddc
 
